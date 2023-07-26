@@ -15,29 +15,88 @@
     
         const categories = ["Arts", "Business", "Engineering and Technology", "Environmental Science", "Humanities", "Math and Science", "Medicine", "Social Science"];
 
-        const csvFilePath = "https://github.com/lawal21/CS-416-Project/blob/master/CS%20416/degrees-that-pay-back.csv";
+        const csvFilePath = "https://raw.githubusercontent.com/lawal21/CS-416-Project/master/CS%20416/degrees-that-pay-back.csv";
 
         d3.csv(csvFilePath)
             // Data preprocessing: Convert salaries to numbers
             .then(data => {data.forEach(d => {
-                d['Mid Career Median Salaries'] = +d['Mid Career Median Salaries'];
+                d['Mid-Career Median Salary'] = +d['Mid-Career Median Salary'];
             });
 
             // Group data by Category and calculate average salaries
             const categoryAverageSalaries = d3.group(data, d => d.Category);
             categoryAverageSalaries.forEach((value, key, map) => {
-                const totalSalaries = value.reduce((acc, curr) => acc + curr['Mid Career Median Salaries'], 0);
+                const totalSalaries = value.reduce((acc, curr) => acc + curr['Mid-Career Median Salary'], 0);
                 const averageSalary = totalSalaries / value.length;
                 map.set(key, averageSalary);
             });
 
+            createBarChart(categoryAverageSalaries);
+
             // Output the results
             categoryAverageSalaries.forEach((averageSalary, category) => {
-                console.log(`Category: ${category}, Average Mid Career Median Salary: ${averageSalary.toFixed(2)}`);
+                console.log(`Category: ${category}, Average Mid-Career Median Salary: ${averageSalary.toFixed(2)}`);
             });
         }).catch(error => {
             console.error('Error loading the CSV data:', error);
-        });   
+        });
+
+        // Function to create the bar chart
+        function createBarChart(data) {
+            // Access the keys (categories) and values (average salaries) from the Map
+            const categories = Array.from(data.keys());
+            const averageSalaries = Array.from(data.values());
+
+            // Set up the dimensions of the SVG and the chart
+            const svgWidth = 400;
+            const svgHeight = 300;
+            const margin = { top: 20, right: 20, bottom: 30, left: 40 };
+            const chartWidth = svgWidth - margin.left - margin.right;
+            const chartHeight = svgHeight - margin.top - margin.bottom;
+
+            // Create the SVG element
+            const svg = d3.select('body')
+                .append('svg')
+                .attr('width', svgWidth)
+                .attr('height', svgHeight);
+
+            // Create the chart group
+            const chart = svg.append('g')
+                .attr('transform', `translate(${margin.left}, ${margin.top})`);
+
+            // Create the x scale
+            const xScale = d3.scaleBand()
+                .domain(categories)
+                .range([0, chartWidth])
+                .padding(0.1);
+
+            // Create the y scale
+            const yScale = d3.scaleLinear()
+                .domain([0, d3.max(averageSalaries)])
+                .range([chartHeight, 0]);
+
+            // Create the bars
+            chart.selectAll('.bar')
+                .data(data)
+                .enter()
+                .append('rect')
+                .attr('class', 'bar')
+                .attr('x', d => xScale(d[0]))
+                .attr('y', d => yScale(d[1]))
+                .attr('width', xScale.bandwidth())
+                .attr('height', d => chartHeight - yScale(d[1]));
+
+            // Add x-axis
+            const xAxis = d3.axisBottom(xScale);
+            chart.append('g')
+                .attr('transform', `translate(0, ${chartHeight})`)
+                .call(xAxis);
+
+            // Add y-axis
+            const yAxis = d3.axisLeft(yScale);
+            chart.append('g')
+                .call(yAxis);
+        }
 
     }
     </script>
