@@ -1,15 +1,11 @@
 <html>
 <script src="https://d3js.org/d3.v7.min.js"></script>
-<style> circle {fill: lightblue; stroke: black;} </style>
+<style> rect {fill: steelblue; stroke: black;} </style>
 <head>
     <title>College Salaries - Drill Down Story</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body onload='init()'>
-
-
-    <svg width=1100 height=1100></svg>
-  
     <script>
     async function init() {
     
@@ -20,9 +16,10 @@
         d3.csv(csvFilePath)
             // Data preprocessing: Convert salaries to numbers
             .then(data => {data.forEach(d => {
-                d['Mid-Career Median Salary'] = +d['Mid-Career Median Salary'];
+                const salaryString = d['Mid-Career Median Salary'].replace(/[$,]/g, '');
+                d['Mid-Career Median Salary'] = +salaryString;
             });
-
+            
             // Group data by Category and calculate average salaries
             const categoryAverageSalaries = d3.group(data, d => d.Category);
             categoryAverageSalaries.forEach((value, key, map) => {
@@ -41,6 +38,38 @@
             console.error('Error loading the CSV data:', error);
         });
 
+        // Add click and mouseover event listeners to the bars in the initial bar chart
+        chart.selectAll('.bar')
+            .on('click', onBarClick)
+            .on('mouseover', onBarMouseOver)
+            .on('mouseout', onBarMouseOut);
+
+        // Function to handle click event on a bar
+        function onBarClick(event, d) {
+            const selectedCategory = d[0];
+            const filteredData = data.filter(item => item.Category === selectedCategory);
+
+            // Clear the contents of the current chart
+            chart.selectAll('*').remove();
+
+            // Call the function to create a new bar chart for the selected category
+            createBarChart(filteredData);
+        }
+
+        // Function to handle mouseover event on a bar
+        function onBarMouseOver(event, d) {
+            d3.select(this)
+                .attr('fill', 'lightblue') // Change the bar color to lightblue on mouseover
+                .style('cursor', 'pointer'); // Change the cursor style to pointer on mouseover
+        }
+
+        // Function to handle mouseout event on a bar
+        function onBarMouseOut(event, d) {
+            d3.select(this)
+                .attr('fill', 'steelblue') // Change the bar color back to the original color on mouseout
+                .style('cursor', 'default'); // Change the cursor style back to default on mouseout
+        }
+
         // Function to create the bar chart
         function createBarChart(data) {
             // Access the keys (categories) and values (average salaries) from the Map
@@ -48,9 +77,9 @@
             const averageSalaries = Array.from(data.values());
 
             // Set up the dimensions of the SVG and the chart
-            const svgWidth = 400;
+            const svgWidth = 1000;
             const svgHeight = 300;
-            const margin = { top: 20, right: 20, bottom: 30, left: 40 };
+            const margin = { top: 20, right: 200, bottom: 20, left: 200   };
             const chartWidth = svgWidth - margin.left - margin.right;
             const chartHeight = svgHeight - margin.top - margin.bottom;
 
@@ -64,16 +93,16 @@
             const chart = svg.append('g')
                 .attr('transform', `translate(${margin.left}, ${margin.top})`);
 
-            // Create the x scale
-            const xScale = d3.scaleBand()
-                .domain(categories)
-                .range([0, chartWidth])
-                .padding(0.1);
-
-            // Create the y scale
-            const yScale = d3.scaleLinear()
+            // Create the x scale (horizontal scale)
+            const xScale = d3.scaleLinear()
                 .domain([0, d3.max(averageSalaries)])
-                .range([chartHeight, 0]);
+                .range([0, chartWidth]);
+
+            // Create the y scale (vertical scale)
+            const yScale = d3.scaleBand()
+                .domain(categories)
+                .range([0, chartHeight])
+                .padding(0.1);
 
             // Create the bars
             chart.selectAll('.bar')
@@ -81,10 +110,15 @@
                 .enter()
                 .append('rect')
                 .attr('class', 'bar')
-                .attr('x', d => xScale(d[0]))
-                .attr('y', d => yScale(d[1]))
-                .attr('width', xScale.bandwidth())
-                .attr('height', d => chartHeight - yScale(d[1]));
+                .attr('x', 0) // Start the bars from the left side
+                .attr('y', d => yScale(d[0])) // Use the yScale for positioning
+                .attr('width', d => xScale(d[1])) // Use the xScale for bar width
+                .attr('height', yScale.bandwidth()) // Use the yScale bandwidth for bar height
+
+            // Add y-axis
+            const yAxis = d3.axisLeft(yScale);
+            chart.append('g')
+                .call(yAxis);
 
             // Add x-axis
             const xAxis = d3.axisBottom(xScale);
@@ -92,12 +126,7 @@
                 .attr('transform', `translate(0, ${chartHeight})`)
                 .call(xAxis);
 
-            // Add y-axis
-            const yAxis = d3.axisLeft(yScale);
-            chart.append('g')
-                .call(yAxis);
         }
-
     }
     </script>
   
