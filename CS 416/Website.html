@@ -1,0 +1,46 @@
+<html>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style> circle {fill: lightblue; stroke: black;} </style>
+<head>
+    <title>College Salaries - Drill Down Story</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body onload='init()'>
+
+
+    <svg width=1100 height=1100></svg>
+  
+    <script>
+    async function init() {
+    
+        const categories = ["Arts", "Business", "Engineering and Technology", "Environmental Science", "Humanities", "Math and Science", "Medicine", "Social Science"];
+
+        const csvFilePath = 'degrees-that-pay-back.csv';
+
+        d3.csv(csvFilePath)
+            // Data preprocessing: Convert salaries to numbers
+            .then(data => {data.forEach(d => {
+                d['Mid Career Median Salaries'] = +d['Mid Career Median Salaries'];
+            });
+
+            // Group data by Category and calculate average salaries
+            const categoryAverageSalaries = d3.group(data, d => d.Category);
+            categoryAverageSalaries.forEach((value, key, map) => {
+                const totalSalaries = value.reduce((acc, curr) => acc + curr['Mid Career Median Salaries'], 0);
+                const averageSalary = totalSalaries / value.length;
+                map.set(key, averageSalary);
+            });
+
+            // Output the results
+            categoryAverageSalaries.forEach((averageSalary, category) => {
+                console.log(`Category: ${category}, Average Mid Career Median Salary: ${averageSalary.toFixed(2)}`);
+            });
+        }).catch(error => {
+            console.error('Error loading the CSV data:', error);
+        });   
+
+    }
+    </script>
+  
+</body>
+</html>
