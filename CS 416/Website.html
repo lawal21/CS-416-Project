@@ -1,109 +1,132 @@
 <html>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <style> rect {fill: steelblue; stroke: black;} </style>
+<style> 
+    rect {fill: steelblue; stroke: black;} 
+    .chart-container {
+        margin-top: 20px;
+        position: relative;
+    }
+    .back-button {
+        position: absolute; 
+        top: 0px;
+        left: 0px;
+    }
+</style>
 <head>
     <title>College Salaries - Drill Down Story</title>
 </head>
 <body onload='init()'>
+
+    <h1>College Salaries - Drill Down Story</h1>
+    <p>This is the first paragraph.</p>
+    <p>This is the second paragraph.</p>
+    <div class="chart-container"></div>
     <script>
     async function init() {
 
-        let data = [];
-        let chart;
-        let chartWidth;
-        let chartHeight;
-        let categoryAverageSalaries;
-    
         const csvFilePath = "https://raw.githubusercontent.com/lawal21/CS-416-Project/master/CS%20416/degrees-that-pay-back.csv";
+        let backButton = null;
 
-        d3.csv(csvFilePath)
-            // Data preprocessing: Convert salaries to numbers
-            .then(data => {data.forEach(d => {
-                const salaryString = d['Mid-Career Median Salary'].replace(/[$,]/g, '');
-                d['Mid-Career Median Salary'] = +salaryString;
-            });
+        const data = await d3.csv(csvFilePath);
             
-            // Group data by Category and calculate average salaries
-            categoryAverageSalaries = d3.group(data, d => d.Category);
-            categoryAverageSalaries.forEach((value, key, map) => {
-                const totalSalaries = value.reduce((acc, curr) => acc + curr['Mid-Career Median Salary'], 0);
-                const averageSalary = totalSalaries / value.length;
-                map.set(key, averageSalary);
-            });
-
-            // Output the results
-            categoryAverageSalaries.forEach((averageSalary, category) => {
-                console.log(`Category: ${category}, Average Mid-Career Median Salary: ${averageSalary.toFixed(2)}`);
-            });
-
-            // Set up the dimensions of the SVG and the chart
-            const svgWidth = 1000;
-            const svgHeight = 300;
-            const margin = {top: 20, right: 200, bottom: 20, left: 200};
-            chartWidth = svgWidth - margin.left - margin.right;
-            chartHeight = svgHeight - margin.top - margin.bottom;
-
-            // Create the SVG element
-            const svg = d3.select('body')
-                .append('svg')
-                .attr('width', svgWidth)
-                .attr('height', svgHeight);
-
-            // Create the chart group
-            chart = svg.append('g')
-                .attr('transform', `translate(${margin.left}, ${margin.top})`);
-
-            // Append a container element with class 'chart-group'
-            chart.append('g')
-                .attr('class', 'chart-group');
-
-            createBarChart(categoryAverageSalaries);
-
-            // Add click and mouseover event listeners to the bars in the initial bar chart
-            chart.selectAll('.bar')
-                .on('click', onBarClick.bind(null, data, chartWidth, chartHeight))
-                .on('mouseover', onBarMouseOver)
-                .on('mouseout', onBarMouseOut);
-
-        }).catch(error => {
-            console.error('Error loading the CSV data:', error);
+        // Data preprocessing: Convert salaries to numbers
+        data.forEach(d => {
+            const salaryString = d['Mid-Career Median Salary'].replace(/[$,]/g, '');
+            d['Mid-Career Median Salary'] = +salaryString;
+        });
+        
+        // Group data by Category and calculate average salaries
+        const categoryAverageSalaries = d3.group(data, d => d.Category);
+        categoryAverageSalaries.forEach((value, key, map) => {
+            const totalSalaries = value.reduce((acc, curr) => acc + curr['Mid-Career Median Salary'], 0);
+            const averageSalary = totalSalaries / value.length;
+            map.set(key, averageSalary);
         });
 
+        // Output the results
+        categoryAverageSalaries.forEach((averageSalary, category) => {
+            console.log(`Category: ${category}, Average Mid-Career Median Salary: ${averageSalary.toFixed(2)}`);
+        });
+
+        const svgWidth = 1000;
+        const svgHeight = 300;
+        const margin = {top: 20, right: 200, bottom: 20, left: 200};
+        const chartWidth = svgWidth - margin.left - margin.right;
+        const chartHeight = svgHeight - margin.top - margin.bottom;
+
+        const svg = d3.select('body')
+            .append('svg')
+            .attr('width', svgWidth)
+            .attr('height', svgHeight);
+
+        const chart = svg.append('g')
+            .attr('transform', `translate(${margin.left}, ${margin.top})`);
+
+        createBarChart(categoryAverageSalaries);
+
+        chart.selectAll('.bar')
+            .on('click', onBarClick)
+            .on('mouseover', onBarMouseOver)
+            .on('mouseout', onBarMouseOut);
+
         // Function to handle click event on a bar
-        function onBarClick(event, d, chartWidth, chartHeight) {
+        function onBarClick(event, d) {
             showCategory(d[0]);
         }
 
         // Function to handle mouseover event on a bar
         function onBarMouseOver(event, d) {
             d3.select(this)
-                .attr('fill', 'lightblue') // Change the bar color to lightblue on mouseover
-                .style('cursor', 'pointer'); // Change the cursor style to pointer on mouseover
+                .attr('fill', 'lightblue') 
+                .style('cursor', 'pointer'); 
         }
 
         // Function to handle mouseout event on a bar
         function onBarMouseOut(event, d) {
             d3.select(this)
-                .attr('fill', 'steelblue') // Change the bar color back to the original color on mouseout
-                .style('cursor', 'default'); // Change the cursor style back to default on mouseout
+                .attr('fill', 'steelblue')
+                .style('cursor', 'default');
         }
 
         // Function to show the bar chart for a specific category
         function showCategory(category) {
             const filteredData = data.filter(item => item.Category === category);
             const undergraduateMajorAverageSalaries = new Map();
+
             filteredData.forEach(d => {
                 undergraduateMajorAverageSalaries.set(d['Undergraduate Major'], d['Mid-Career Median Salary']);
             });
 
-            chart.select('.chart-group').selectAll('*').remove();
+            // Output the results
+            undergraduateMajorAverageSalaries.forEach((averageSalary, undergraduateMajor) => {
+                console.log(`Undergraduate Major: ${undergraduateMajor}, Average Mid-Career Median Salary: ${averageSalary.toFixed(2)}`);
+            });
+
+            chart.selectAll('*').remove();
             createBarChart(undergraduateMajorAverageSalaries);
+
+            backButton = d3.select('body')
+                .append('button')
+                .text('Back')
+                .attr('class', 'back-button')
+                .on('click', resetChart);
         }
 
         // Function to reset the chart to the original graph
         function resetChart() {
-            chart.select('.chart-group').selectAll('*').remove();
+            chart.selectAll('*').remove();
             createBarChart(categoryAverageSalaries);
+
+            chart.selectAll('.bar')
+                .on('click', onBarClick)
+                .on('mouseover', onBarMouseOver)
+                .on('mouseout', onBarMouseOut);
+
+            if (backButton) {
+                backButton.remove();
+                backButton = null;
+            }
         }
 
         // Function to create the bar chart
@@ -112,18 +135,17 @@
             const categories = Array.from(data.keys());
             const averageSalaries = Array.from(data.values());
 
-            // Create the x scale (horizontal scale)
+            const maxSalary = 110000;
+
             const xScale = d3.scaleLinear()
-                .domain([0, d3.max(averageSalaries)])
+                .domain([0, maxSalary])
                 .range([0, chartWidth]);
 
-            // Create the y scale (vertical scale)
             const yScale = d3.scaleBand()
                 .domain(categories)
                 .range([0, chartHeight])
                 .padding(0.1);
 
-            // Create the bars
             chart.selectAll('.bar')
                 .data(data)
                 .enter()
@@ -134,12 +156,10 @@
                 .attr('width', d => xScale(d[1])) // Use the xScale for bar width
                 .attr('height', yScale.bandwidth()) // Use the yScale bandwidth for bar height
 
-            // Add y-axis
             const yAxis = d3.axisLeft(yScale);
             chart.append('g')
                 .call(yAxis);
 
-            // Add x-axis
             const xAxis = d3.axisBottom(xScale);
             chart.append('g')
                 .attr('transform', `translate(0, ${chartHeight})`)
