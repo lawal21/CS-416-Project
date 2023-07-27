@@ -3,14 +3,17 @@
 <style> rect {fill: steelblue; stroke: black;} </style>
 <head>
     <title>College Salaries - Drill Down Story</title>
-    <link rel="stylesheet" href="styles.css">
 </head>
 <body onload='init()'>
     <script>
     async function init() {
-    
-        const categories = ["Arts", "Business", "Engineering and Technology", "Environmental Science", "Humanities", "Math and Science", "Medicine", "Social Science"];
 
+        let data = [];
+        let chart;
+        let chartWidth;
+        let chartHeight;
+        let categoryAverageSalaries;
+    
         const csvFilePath = "https://raw.githubusercontent.com/lawal21/CS-416-Project/master/CS%20416/degrees-that-pay-back.csv";
 
         d3.csv(csvFilePath)
@@ -21,39 +24,54 @@
             });
             
             // Group data by Category and calculate average salaries
-            const categoryAverageSalaries = d3.group(data, d => d.Category);
+            categoryAverageSalaries = d3.group(data, d => d.Category);
             categoryAverageSalaries.forEach((value, key, map) => {
                 const totalSalaries = value.reduce((acc, curr) => acc + curr['Mid-Career Median Salary'], 0);
                 const averageSalary = totalSalaries / value.length;
                 map.set(key, averageSalary);
             });
 
-            createBarChart(categoryAverageSalaries);
-
             // Output the results
             categoryAverageSalaries.forEach((averageSalary, category) => {
                 console.log(`Category: ${category}, Average Mid-Career Median Salary: ${averageSalary.toFixed(2)}`);
             });
+
+            // Set up the dimensions of the SVG and the chart
+            const svgWidth = 1000;
+            const svgHeight = 300;
+            const margin = {top: 20, right: 200, bottom: 20, left: 200};
+            chartWidth = svgWidth - margin.left - margin.right;
+            chartHeight = svgHeight - margin.top - margin.bottom;
+
+            // Create the SVG element
+            const svg = d3.select('body')
+                .append('svg')
+                .attr('width', svgWidth)
+                .attr('height', svgHeight);
+
+            // Create the chart group
+            chart = svg.append('g')
+                .attr('transform', `translate(${margin.left}, ${margin.top})`);
+
+            // Append a container element with class 'chart-group'
+            chart.append('g')
+                .attr('class', 'chart-group');
+
+            createBarChart(categoryAverageSalaries);
+
+            // Add click and mouseover event listeners to the bars in the initial bar chart
+            chart.selectAll('.bar')
+                .on('click', onBarClick.bind(null, data, chartWidth, chartHeight))
+                .on('mouseover', onBarMouseOver)
+                .on('mouseout', onBarMouseOut);
+
         }).catch(error => {
             console.error('Error loading the CSV data:', error);
         });
 
-        // Add click and mouseover event listeners to the bars in the initial bar chart
-        chart.selectAll('.bar')
-            .on('click', onBarClick)
-            .on('mouseover', onBarMouseOver)
-            .on('mouseout', onBarMouseOut);
-
         // Function to handle click event on a bar
-        function onBarClick(event, d) {
-            const selectedCategory = d[0];
-            const filteredData = data.filter(item => item.Category === selectedCategory);
-
-            // Clear the contents of the current chart
-            chart.selectAll('*').remove();
-
-            // Call the function to create a new bar chart for the selected category
-            createBarChart(filteredData);
+        function onBarClick(event, d, chartWidth, chartHeight) {
+            showCategory(d[0]);
         }
 
         // Function to handle mouseover event on a bar
@@ -70,28 +88,29 @@
                 .style('cursor', 'default'); // Change the cursor style back to default on mouseout
         }
 
+        // Function to show the bar chart for a specific category
+        function showCategory(category) {
+            const filteredData = data.filter(item => item.Category === category);
+            const undergraduateMajorAverageSalaries = new Map();
+            filteredData.forEach(d => {
+                undergraduateMajorAverageSalaries.set(d['Undergraduate Major'], d['Mid-Career Median Salary']);
+            });
+
+            chart.select('.chart-group').selectAll('*').remove();
+            createBarChart(undergraduateMajorAverageSalaries);
+        }
+
+        // Function to reset the chart to the original graph
+        function resetChart() {
+            chart.select('.chart-group').selectAll('*').remove();
+            createBarChart(categoryAverageSalaries);
+        }
+
         // Function to create the bar chart
         function createBarChart(data) {
             // Access the keys (categories) and values (average salaries) from the Map
             const categories = Array.from(data.keys());
             const averageSalaries = Array.from(data.values());
-
-            // Set up the dimensions of the SVG and the chart
-            const svgWidth = 1000;
-            const svgHeight = 300;
-            const margin = { top: 20, right: 200, bottom: 20, left: 200   };
-            const chartWidth = svgWidth - margin.left - margin.right;
-            const chartHeight = svgHeight - margin.top - margin.bottom;
-
-            // Create the SVG element
-            const svg = d3.select('body')
-                .append('svg')
-                .attr('width', svgWidth)
-                .attr('height', svgHeight);
-
-            // Create the chart group
-            const chart = svg.append('g')
-                .attr('transform', `translate(${margin.left}, ${margin.top})`);
 
             // Create the x scale (horizontal scale)
             const xScale = d3.scaleLinear()
@@ -125,7 +144,6 @@
             chart.append('g')
                 .attr('transform', `translate(0, ${chartHeight})`)
                 .call(xAxis);
-
         }
     }
     </script>
