@@ -1,11 +1,11 @@
 <html>
 <script src='https://d3js.org/d3.v7.min.js'></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-annotation/2.5.1/d3-annotation.min.js"></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/d3-annotation/2.5.1/d3-annotation.min.js'></script>
 <style> rect {fill: steelblue; stroke: black;} </style>
 <style> 
     rect {fill: steelblue; stroke: black;} 
     .chart-container {
-        margin-top: 50px;
+        margin-top: 10px;
         position: relative;
     }
     .back-button {
@@ -15,11 +15,11 @@
     }
 </style>
 <head>
-    <title>College Salaries - Drill Down Story</title>
+    <title>What Majors Have the Best Mid-Career Median Salaries?</title>
 </head>
 <body onload='init()'>
 
-    <h1>College Salaries - Drill Down Story</h1>
+    <h1>What Majors Have the Best Mid-Career Median Salaries?</h1>
     <p>This is the first paragraph.</p>
     <p>This is the second paragraph.</p>
     <div class='chart-container'></div>
@@ -38,6 +38,9 @@
             d['Mid-Career Median Salary'] = +salaryString;
         });
         
+        // Sort the data by mid-career median salary in descending order
+        data.sort((a, b) => b['Mid-Career Median Salary'] - a['Mid-Career Median Salary']);
+
         // Group data by Category and calculate average salaries
         const categoryAverageSalaries = d3.group(data, d => d.Category);
         categoryAverageSalaries.forEach((value, key, map) => {
@@ -169,18 +172,30 @@
                 .call(xAxis);
 
             if (selectedCategory === null) {
-                const annotationSettings = {
+                const annotationSettings = [
+                {
                     type: d3.annotationCalloutElbow,
-                    note: { title: 'Original Chart', label: 'This is the initial chart' },
-                    x: xScale(50000), // X position of the annotation
-                    y: yScale('Social Science'), // Y position of the annotation
+                    note: {title: '', label: 'STEM majors are seen to make the most money, specifically engineering majros'},
+                    x: xScale(data.get('Engineering and Technology')), // X position of the annotation
+                    y: yScale('Engineering and Technology'), // Y position of the annotation
                     dx: 100, // Adjust the x-offset of the annotation
                     dy: 100, // Adjust the y-offset of the annotation
-                    subject: { width: 100, height: yScale.bandwidth() } // Subject area that the annotation points to
-                };
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
+                },
+                {
+                    type: d3.annotationCalloutElbow,
+                    note: {title: '', label: 'Though majoring in the arts can make a lot of money in the top percentile, the median is quite low as it a high variance field'},
+                    x: xScale(data.get('Arts')), // X position of the annotation
+                    y: yScale('Arts'), // Y position of the annotation
+                    dx: 300, // Adjust the x-offset of the annotation
+                    dy: 100, // Adjust the y-offset of the annotation
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
+                }];
 
                 const makeAnnotations = d3.annotation()
-                    .annotations([annotationSettings])
+                    .annotations(annotationSettings)
                     .type(d3.annotationCallout);
 
                 chart.append('g')
@@ -190,78 +205,189 @@
 
             // Add annotations only for specific categories
             if (selectedCategory === 'Business') {
-                const annotationSettings = {
+                const annotationSettings = [
+                {
                     type: d3.annotationCalloutElbow,
-                    note: { title: 'Health Care Administration', label: 'This is the Health Care Administration category' },
-                    x: xScale(80000), // X position of the annotation
+                    note: {title: '', label: 'Health care administration and hospitality & tourism differ from traditional business degrees with their narrow focuses, thus leading to lower salaries'},
+                    x: xScale(data.get('Health Care Administration')), // X position of the annotation
                     y: yScale('Health Care Administration'), // Y position of the annotation
-                    dx: 100, // Adjust the x-offset of the annotation
-                    dy: 20, // Adjust the y-offset of the annotation
-                    subject: { width: 100, height: yScale.bandwidth() } // Subject area that the annotation points to
-                };
-
-                const makeAnnotations = d3.annotation()
-                    .annotations([annotationSettings])
-                    .type(d3.annotationCallout);
-
-                chart.append('g')
-                    .attr('class', 'annotation-group1')
-                    .call(makeAnnotations);
-
-                console.log(1);
-            }
-
-            if (selectedCategory === 'Engineering and Technology') {
-                const annotationSettings = [{
-                    type: d3.annotationCalloutElbow,
-                    note: { title: 'Computer Science', label: 'This is the Health Care Administration category' },
-                    x: xScale(80000), // X position of the annotation
-                    y: yScale('Computer Science'), // Y position of the annotation
-                    dx: 100, // Adjust the x-offset of the annotation
+                    dx: 300, // Adjust the x-offset of the annotation
                     dy: 100, // Adjust the y-offset of the annotation
-                    subject: { width: 100, height: yScale.bandwidth() } // Subject area that the annotation points to
-                },{
-                    type: d3.annotationCalloutElbow,
-                    note: { title: 'Information Technology (IT)', label: 'This is the Information Technology (IT) category' },
-                    x: xScale(80000), // X position of the annotation
-                    y: yScale('Information Technology (IT)'), // Y position of the annotation
-                    dx: 100, // Adjust the x-offset of the annotation
-                    dy: 100, // Adjust the y-offset of the annotation
-                    subject: { width: 100, height: yScale.bandwidth() } // Subject area that the annotation points to
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
                 }];
 
                 const makeAnnotations = d3.annotation()
-                    .annotations([annotationSettings])
+                    .annotations(annotationSettings)
+                    .type(d3.annotationCallout);
+
+                chart.append('g')
+                    .attr('class', 'annotation-group')
+                    .call(makeAnnotations);
+            }
+
+            if (selectedCategory === 'Engineering and Technology') {
+                const annotationSettings = [
+                {
+                    type: d3.annotationCalloutElbow,
+                    note: {title: '', label: 'While computer science does not have engineering in the name, it is often seen as an engineering major'},
+                    x: xScale(data.get('Computer Science')), // X position of the annotation
+                    y: yScale('Computer Science'), // Y position of the annotation
+                    dx: 100, // Adjust the x-offset of the annotation
+                    dy: 100, // Adjust the y-offset of the annotation
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
+                },
+                {
+                    type: d3.annotationCalloutElbow,
+                    note: {title: '', label: 'IT is the outlier as it is the only major that does not have to do with engineering'},
+                    x: xScale(data.get('Information Technology (IT)')), // X position of the annotation
+                    y: yScale('Information Technology (IT)'), // Y position of the annotation
+                    dx: 200, // Adjust the x-offset of the annotation
+                    dy: 100, // Adjust the y-offset of the annotation
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
+                }];
+
+                const makeAnnotations = d3.annotation()
+                    .annotations(annotationSettings)
                     .type(d3.annotationCalloutElbow);
 
                 chart.append('g')
-                    .attr('class', 'annotation-group1')
+                    .attr('class', 'annotation-group')
                     .call(makeAnnotations)
-
             }
 
             if (selectedCategory === 'Environmental Science') {
+                const annotationSettings = [
+                {
+                    type: d3.annotationCalloutElbow,
+                    note: {title: '', label: 'While all of these majors do not have the highest pay, they all share a strong commitment to environmental conservation and have a large impact on the world ecology'},
+                    x: xScale(data.get('Geography')), // X position of the annotation
+                    y: yScale('Geography'), // Y position of the annotation
+                    dx: 200, // Adjust the x-offset of the annotation
+                    dy: 100, // Adjust the y-offset of the annotation
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
+                }];
 
+                const makeAnnotations = d3.annotation()
+                    .annotations(annotationSettings)
+                    .type(d3.annotationCallout);
+
+                chart.append('g')
+                    .attr('class', 'annotation-group')
+                    .call(makeAnnotations);
             }
 
             if (selectedCategory === 'Social Science') {
+                const annotationSettings = [
+                {
+                    type: d3.annotationCalloutElbow,
+                    note: {title: '', label: 'International relations and political science are both majors that have a lot of uses in the global business world, resulting in larger salaries'},
+                    x: xScale(data.get('International Relations')), // X position of the annotation
+                    y: yScale('International Relations'), // Y position of the annotation
+                    dx: 200, // Adjust the x-offset of the annotation
+                    dy: 100, // Adjust the y-offset of the annotation
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
+                }];
 
+                const makeAnnotations = d3.annotation()
+                    .annotations(annotationSettings)
+                    .type(d3.annotationCallout);
+
+                chart.append('g')
+                    .attr('class', 'annotation-group')
+                    .call(makeAnnotations);
             }
 
             if (selectedCategory === 'Arts') {
+                const annotationSettings = [
+                {
+                    type: d3.annotationCalloutElbow,
+                    note: {title: '', label: 'Architecture being more of an applied art and considered engineering explains the larger salary'},
+                    x: xScale(data.get('Architecture')), // X position of the annotation
+                    y: yScale('Architecture'), // Y position of the annotation
+                    dx: 200, // Adjust the x-offset of the annotation
+                    dy: 100, // Adjust the y-offset of the annotation
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
+                }];
 
+                const makeAnnotations = d3.annotation()
+                    .annotations(annotationSettings)
+                    .type(d3.annotationCallout);
+
+                chart.append('g')
+                    .attr('class', 'annotation-group')
+                    .call(makeAnnotations);
             }
 
             if (selectedCategory === 'Math and Science') {
+                const annotationSettings = [
+                {
+                    type: d3.annotationCalloutElbow,
+                    note: {title: '', label: 'Physics is a very versatile degree as it requires a lot of math and it is very well applied science, being useful in a lot of engineering jobs'},
+                    x: xScale(data.get('Physics')), // X position of the annotation
+                    y: yScale('Physics'), // Y position of the annotation
+                    dx: 100, // Adjust the x-offset of the annotation
+                    dy: 100, // Adjust the y-offset of the annotation
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
+                }];
 
+                const makeAnnotations = d3.annotation()
+                    .annotations(annotationSettings)
+                    .type(d3.annotationCallout);
+
+                chart.append('g')
+                    .attr('class', 'annotation-group')
+                    .call(makeAnnotations);
             }
 
             if (selectedCategory === 'Humanities') {
+                const annotationSettings = [
+                {
+                    type: d3.annotationCalloutElbow,
+                    note: {title: '', label: 'While philosophy majors often do not make a lot out of college, they have one of the highest mid-career median salaries as it helps with the background for a lot of jobs such as law'},
+                    x: xScale(data.get('Philosophy')), // X position of the annotation
+                    y: yScale('Philosophy'), // Y position of the annotation
+                    dx: 200, // Adjust the x-offset of the annotation
+                    dy: 100, // Adjust the y-offset of the annotation
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
+                }];
 
+                const makeAnnotations = d3.annotation()
+                    .annotations(annotationSettings)
+                    .type(d3.annotationCallout);
+
+                chart.append('g')
+                    .attr('class', 'annotation-group')
+                    .call(makeAnnotations);
             }
 
             if (selectedCategory === 'Medicine') {
+                const annotationSettings = [
+                {
+                    type: d3.annotationCalloutElbow,
+                    note: {title: '', label: 'Physician assistants (PAs) do not just have a high mid-career median salary, but the highest starting mid-career median salary of $74,300 of all the majors in the data'},
+                    x: xScale(data.get('Physician Assistant')), // X position of the annotation
+                    y: yScale('Physician Assistant'), // Y position of the annotation
+                    dx: 100, // Adjust the x-offset of the annotation
+                    dy: 100, // Adjust the y-offset of the annotation
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
+                }];
 
+                const makeAnnotations = d3.annotation()
+                    .annotations(annotationSettings)
+                    .type(d3.annotationCallout);
+
+                chart.append('g')
+                    .attr('class', 'annotation-group')
+                    .call(makeAnnotations);
             }
         }    
     }
