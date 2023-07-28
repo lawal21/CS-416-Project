@@ -1,16 +1,17 @@
 <html>
-<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src='https://d3js.org/d3.v7.min.js'></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-annotation/2.5.1/d3-annotation.min.js"></script>
 <style> rect {fill: steelblue; stroke: black;} </style>
 <style> 
     rect {fill: steelblue; stroke: black;} 
     .chart-container {
-        margin-top: 20px;
+        margin-top: 50px;
         position: relative;
     }
     .back-button {
         position: absolute; 
-        top: 0px;
-        left: 0px;
+        top: 10px;
+        left: 10px;
     }
 </style>
 <head>
@@ -21,12 +22,13 @@
     <h1>College Salaries - Drill Down Story</h1>
     <p>This is the first paragraph.</p>
     <p>This is the second paragraph.</p>
-    <div class="chart-container"></div>
+    <div class='chart-container'></div>
     <script>
     async function init() {
 
-        const csvFilePath = "https://raw.githubusercontent.com/lawal21/CS-416-Project/master/CS%20416/degrees-that-pay-back.csv";
+        const csvFilePath = 'https://raw.githubusercontent.com/lawal21/CS-416-Project/master/CS%20416/degrees-that-pay-back.csv';
         let backButton = null;
+        let selectedCategory = null;
 
         const data = await d3.csv(csvFilePath);
             
@@ -50,12 +52,12 @@
         });
 
         const svgWidth = 1000;
-        const svgHeight = 300;
-        const margin = {top: 20, right: 200, bottom: 20, left: 200};
+        const svgHeight = 1000;
+        const margin = {top: 20, right: 200, bottom: 200, left: 200};
         const chartWidth = svgWidth - margin.left - margin.right;
         const chartHeight = svgHeight - margin.top - margin.bottom;
 
-        const svg = d3.select('body')
+        const svg = d3.select('.chart-container')
             .append('svg')
             .attr('width', svgWidth)
             .attr('height', svgHeight);
@@ -91,6 +93,7 @@
 
         // Function to show the bar chart for a specific category
         function showCategory(category) {
+            selectedCategory = category;
             const filteredData = data.filter(item => item.Category === category);
             const undergraduateMajorAverageSalaries = new Map();
 
@@ -106,7 +109,7 @@
             chart.selectAll('*').remove();
             createBarChart(undergraduateMajorAverageSalaries);
 
-            backButton = d3.select('body')
+            backButton = d3.select('.chart-container')
                 .append('button')
                 .text('Back')
                 .attr('class', 'back-button')
@@ -115,6 +118,7 @@
 
         // Function to reset the chart to the original graph
         function resetChart() {
+            selectedCategory = null;
             chart.selectAll('*').remove();
             createBarChart(categoryAverageSalaries);
 
@@ -132,9 +136,8 @@
         // Function to create the bar chart
         function createBarChart(data) {
             // Access the keys (categories) and values (average salaries) from the Map
-            const categories = Array.from(data.keys());
-            const averageSalaries = Array.from(data.values());
-
+            const majors = Array.from(data.keys());
+            //const averageSalaries = Array.from(data.values());
             const maxSalary = 110000;
 
             const xScale = d3.scaleLinear()
@@ -142,7 +145,7 @@
                 .range([0, chartWidth]);
 
             const yScale = d3.scaleBand()
-                .domain(categories)
+                .domain(majors)
                 .range([0, chartHeight])
                 .padding(0.1);
 
@@ -164,7 +167,103 @@
             chart.append('g')
                 .attr('transform', `translate(0, ${chartHeight})`)
                 .call(xAxis);
-        }
+
+            if (selectedCategory === null) {
+                const annotationSettings = {
+                    type: d3.annotationCalloutElbow,
+                    note: { title: 'Original Chart', label: 'This is the initial chart' },
+                    x: xScale(50000), // X position of the annotation
+                    y: yScale('Social Science'), // Y position of the annotation
+                    dx: 100, // Adjust the x-offset of the annotation
+                    dy: 100, // Adjust the y-offset of the annotation
+                    subject: { width: 100, height: yScale.bandwidth() } // Subject area that the annotation points to
+                };
+
+                const makeAnnotations = d3.annotation()
+                    .annotations([annotationSettings])
+                    .type(d3.annotationCallout);
+
+                chart.append('g')
+                    .attr('class', 'annotation-group')
+                    .call(makeAnnotations);
+            }
+
+            // Add annotations only for specific categories
+            if (selectedCategory === 'Business') {
+                const annotationSettings = {
+                    type: d3.annotationCalloutElbow,
+                    note: { title: 'Health Care Administration', label: 'This is the Health Care Administration category' },
+                    x: xScale(80000), // X position of the annotation
+                    y: yScale('Health Care Administration'), // Y position of the annotation
+                    dx: 100, // Adjust the x-offset of the annotation
+                    dy: 20, // Adjust the y-offset of the annotation
+                    subject: { width: 100, height: yScale.bandwidth() } // Subject area that the annotation points to
+                };
+
+                const makeAnnotations = d3.annotation()
+                    .annotations([annotationSettings])
+                    .type(d3.annotationCallout);
+
+                chart.append('g')
+                    .attr('class', 'annotation-group1')
+                    .call(makeAnnotations);
+
+                console.log(1);
+            }
+
+            if (selectedCategory === 'Engineering and Technology') {
+                const annotationSettings = [{
+                    type: d3.annotationCalloutElbow,
+                    note: { title: 'Computer Science', label: 'This is the Health Care Administration category' },
+                    x: xScale(80000), // X position of the annotation
+                    y: yScale('Computer Science'), // Y position of the annotation
+                    dx: 100, // Adjust the x-offset of the annotation
+                    dy: 100, // Adjust the y-offset of the annotation
+                    subject: { width: 100, height: yScale.bandwidth() } // Subject area that the annotation points to
+                },{
+                    type: d3.annotationCalloutElbow,
+                    note: { title: 'Information Technology (IT)', label: 'This is the Information Technology (IT) category' },
+                    x: xScale(80000), // X position of the annotation
+                    y: yScale('Information Technology (IT)'), // Y position of the annotation
+                    dx: 100, // Adjust the x-offset of the annotation
+                    dy: 100, // Adjust the y-offset of the annotation
+                    subject: { width: 100, height: yScale.bandwidth() } // Subject area that the annotation points to
+                }];
+
+                const makeAnnotations = d3.annotation()
+                    .annotations([annotationSettings])
+                    .type(d3.annotationCalloutElbow);
+
+                chart.append('g')
+                    .attr('class', 'annotation-group1')
+                    .call(makeAnnotations)
+
+            }
+
+            if (selectedCategory === 'Environmental Science') {
+
+            }
+
+            if (selectedCategory === 'Social Science') {
+
+            }
+
+            if (selectedCategory === 'Arts') {
+
+            }
+
+            if (selectedCategory === 'Math and Science') {
+
+            }
+
+            if (selectedCategory === 'Humanities') {
+
+            }
+
+            if (selectedCategory === 'Medicine') {
+
+            }
+        }    
     }
     </script>
   
