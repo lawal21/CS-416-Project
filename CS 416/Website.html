@@ -50,11 +50,6 @@
             map.set(key, averageSalary);
         });
 
-        // Output the results
-        categoryAverageSalaries.forEach((averageSalary, category) => {
-            console.log(`Category: ${category}, Average Mid-Career Median Salary: ${averageSalary.toFixed(2)}`);
-        });
-
         const svgWidth = 1000;
         const svgHeight = 1000;
         const margin = {top: 20, right: 200, bottom: 200, left: 200};
@@ -73,22 +68,10 @@
 
         chart.selectAll('.bar')
             .on('click', onBarClick)
-            .on('mouseover', onBarMouseOver)
-            .on('mouseout', onBarMouseOut);
 
         // Function to handle click event on a bar
         function onBarClick(event, d) {
             showCategory(d[0]);
-        }
-
-        // Function to handle mouseover event on a bar
-        function onBarMouseOver(event, d) {
-            d3.select(this).classed('hovered', true);
-        }
-
-        // Function to handle mouseout event on a bar
-        function onBarMouseOut(event, d) {
-            d3.select(this).classed('hovered', false);
         }
 
         // Function to show the bar chart for a specific category
@@ -101,11 +84,6 @@
                 undergraduateMajorAverageSalaries.set(d['Undergraduate Major'], d['Mid-Career Median Salary']);
             });
 
-            // Output the results
-            undergraduateMajorAverageSalaries.forEach((averageSalary, undergraduateMajor) => {
-                console.log(`Undergraduate Major: ${undergraduateMajor}, Average Mid-Career Median Salary: ${averageSalary.toFixed(2)}`);
-            });
-
             chart.selectAll('*').remove();
             createBarChart(undergraduateMajorAverageSalaries);
 
@@ -114,6 +92,10 @@
                 .text('Back')
                 .attr('class', 'back-button')
                 .on('click', resetChart);
+
+            // Disable pointer events on bars when drilling down
+            chart.selectAll('.bar')
+                .style('pointer-events', 'none');
         }
 
         // Function to reset the chart to the original graph
@@ -124,8 +106,6 @@
 
             chart.selectAll('.bar')
                 .on('click', onBarClick)
-                .on('mouseover', onBarMouseOver)
-                .on('mouseout', onBarMouseOut);
 
             if (backButton) {
                 backButton.remove();
@@ -135,7 +115,6 @@
 
         // Function to create the bar chart
         function createBarChart(data) {
-            // Access the keys (categories) and values (average salaries) from the Map
             const majors = Array.from(data.keys());
             //const averageSalaries = Array.from(data.values());
             const maxSalary = 110000;
@@ -159,10 +138,10 @@
                 .enter()
                 .append('rect')
                 .attr('class', 'bar')
-                .attr('x', 0) // Start the bars from the left side
-                .attr('y', d => yScale(d[0])) // Use the yScale for positioning
-                .attr('width', d => xScale(d[1])) // Use the xScale for bar width
-                .attr('height', yScale.bandwidth()) // Use the yScale bandwidth for bar height
+                .attr('x', 0)
+                .attr('y', d => yScale(d[0]))
+                .attr('width', d => xScale(d[1]))
+                .attr('height', yScale.bandwidth())
 
             const yAxis = d3.axisLeft(yScale);
             chart.append('g')
@@ -172,7 +151,7 @@
             chart.append('text')
                 .attr('transform', 'rotate(-90)')
                 .attr('x', -chartHeight / 2)
-                .attr('y', -margin.left + 75) // Adjust the y position for better alignment
+                .attr('y', -margin.left + 75)
                 .style('text-anchor', 'middle')
                 .text(ylabel);
 
@@ -189,6 +168,20 @@
                 .style('text-anchor', 'middle')
                 .text('Average Mid-Career Median Salary');
 
+            if (selectedCategory == null) {
+                chart.append('text')
+                    .attr('x', chartWidth)
+                    .attr('y', chartHeight / 2)
+                    .style('text-anchor', 'middle')
+                    .text('Click on bars for more detail')
+                    .attr('opacity', 0.7);
+            }
+            
+
+            drawAnnotations(chart, data, xScale, yScale);
+            
+        }
+        function drawAnnotations(chart, data, xScale, yScale) {
             if (selectedCategory === null) {
                 const annotationSettings = [
                 {
@@ -219,10 +212,7 @@
                 chart.append('g')
                     .attr('class', 'annotation-group')
                     .call(makeAnnotations);
-            }
-
-            // Add annotations only for specific categories
-            if (selectedCategory === 'Business') {
+            } else if (selectedCategory === 'Business') {
                 const annotationSettings = [
                 {
                     type: d3.annotationCalloutElbow,
@@ -242,9 +232,7 @@
                 chart.append('g')
                     .attr('class', 'annotation-group')
                     .call(makeAnnotations);
-            }
-
-            if (selectedCategory === 'Engineering and Technology') {
+            } else if (selectedCategory === 'Engineering and Technology') {
                 const annotationSettings = [
                 {
                     type: d3.annotationCalloutElbow,
@@ -274,9 +262,7 @@
                 chart.append('g')
                     .attr('class', 'annotation-group')
                     .call(makeAnnotations)
-            }
-
-            if (selectedCategory === 'Environmental Science') {
+            } else if (selectedCategory === 'Environmental Science') {
                 const annotationSettings = [
                 {
                     type: d3.annotationCalloutElbow,
@@ -296,9 +282,7 @@
                 chart.append('g')
                     .attr('class', 'annotation-group')
                     .call(makeAnnotations);
-            }
-
-            if (selectedCategory === 'Social Science') {
+            } else if (selectedCategory === 'Social Science') {
                 const annotationSettings = [
                 {
                     type: d3.annotationCalloutElbow,
@@ -318,9 +302,7 @@
                 chart.append('g')
                     .attr('class', 'annotation-group')
                     .call(makeAnnotations);
-            }
-
-            if (selectedCategory === 'Arts') {
+            } else if (selectedCategory === 'Arts') {
                 const annotationSettings = [
                 {
                     type: d3.annotationCalloutElbow,
@@ -340,9 +322,7 @@
                 chart.append('g')
                     .attr('class', 'annotation-group')
                     .call(makeAnnotations);
-            }
-
-            if (selectedCategory === 'Math and Science') {
+            } else if (selectedCategory === 'Math and Science') {
                 const annotationSettings = [
                 {
                     type: d3.annotationCalloutElbow,
@@ -362,9 +342,7 @@
                 chart.append('g')
                     .attr('class', 'annotation-group')
                     .call(makeAnnotations);
-            }
-
-            if (selectedCategory === 'Humanities') {
+            } else if (selectedCategory === 'Humanities') {
                 const annotationSettings = [
                 {
                     type: d3.annotationCalloutElbow,
@@ -384,9 +362,7 @@
                 chart.append('g')
                     .attr('class', 'annotation-group')
                     .call(makeAnnotations);
-            }
-
-            if (selectedCategory === 'Medicine') {
+            } else if (selectedCategory === 'Medicine') {
                 const annotationSettings = [
                 {
                     type: d3.annotationCalloutElbow,
@@ -407,7 +383,8 @@
                     .attr('class', 'annotation-group')
                     .call(makeAnnotations);
             }
-        }    
+        }
+        
     }
     </script>
   
