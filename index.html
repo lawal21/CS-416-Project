@@ -1,0 +1,407 @@
+<html>
+<script src='https://d3js.org/d3.v7.min.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/d3-annotation/2.5.1/d3-annotation.min.js'></script>
+<style> 
+    rect {fill: steelblue; stroke: black; transition: fill 0.3s ease} 
+    rect:hover {fill: lightblue; cursor: pointer;
+    }
+    .chart-container {
+        margin-top: 10px;
+        position: relative;
+        display: flex; /* Add this to center the chart */
+        justify-content: center; /* Add this to center the chart */
+    }
+    .back-button {
+        position: absolute; 
+        top: 10px;
+        left: 10px;
+    }
+</style>
+<head>
+    <title>What Majors Have the Best Mid-Career Median Salaries?</title>
+</head>
+<body onload='init()'>
+
+    <h1>What Majors Have the Best Mid-Career Median Salaries?</h1>
+    <p>When choosing a major, it is important to ask yourself what salary you will be looking at in order to get a good return on investment (ROI) on your college degree. 
+        While you can find work with any college degree, yet alone find work without one, not everyone has the luxury of not taking out college loans, so finding a job where you can pay them off is crucial to many. 
+        In this chart, you will be able to find what types of majors, and what specific majors, give the best salary towards the middle of one's career. Note that this is only median career, so there may be more variance in different fields.
+        More information about starting salaries and the salaries in different percentiles can be found here: <a href="url">https://www.kaggle.com/datasets/wsj/college-salaries?resource=download</a>.
+    </p>
+    <div class='chart-container'></div>
+    <script>
+    async function init() {
+
+        const csvFilePath = 'https://raw.githubusercontent.com/lawal21/CS-416-Project/master/CS%20416/degrees-that-pay-back.csv';
+        let backButton = null;
+        let selectedCategory = null;
+
+        const data = await d3.csv(csvFilePath);
+            
+        // Data preprocessing: Convert salaries to numbers
+        data.forEach(d => {
+            const salaryString = d['Mid-Career Median Salary'].replace(/[$,]/g, '');
+            d['Mid-Career Median Salary'] = +salaryString;
+        });
+        
+        // Sort the data by mid-career median salary in descending order
+        data.sort((a, b) => b['Mid-Career Median Salary'] - a['Mid-Career Median Salary']);
+
+        // Group data by Category and calculate average salaries
+        const categoryAverageSalaries = d3.group(data, d => d.Category);
+        categoryAverageSalaries.forEach((value, key, map) => {
+            const totalSalaries = value.reduce((acc, curr) => acc + curr['Mid-Career Median Salary'], 0);
+            const averageSalary = totalSalaries / value.length;
+            map.set(key, averageSalary);
+        });
+
+        const svgWidth = 2000;
+        const svgHeight = 1000;
+        const margin = {top: 20, right: 200, bottom: 200, left: 200};
+        const chartWidth = svgWidth - margin.left - margin.right;
+        const chartHeight = svgHeight - margin.top - margin.bottom;
+
+        const svg = d3.select('.chart-container')
+            .append('svg')
+            .attr('width', svgWidth)
+            .attr('height', svgHeight);
+
+        const chart = svg.append('g')
+            .attr('transform', `translate(${margin.left}, ${margin.top})`);
+
+        createBarChart(categoryAverageSalaries);
+
+        chart.selectAll('.bar')
+            .on('click', onBarClick)
+
+        // Function to handle click event on a bar
+        function onBarClick(event, d) {
+            showCategory(d[0]);
+        }
+
+        // Function to show the bar chart for a specific category
+        function showCategory(category) {
+            selectedCategory = category;
+            const filteredData = data.filter(item => item.Category === category);
+            const undergraduateMajorAverageSalaries = new Map();
+
+            filteredData.forEach(d => {
+                undergraduateMajorAverageSalaries.set(d['Undergraduate Major'], d['Mid-Career Median Salary']);
+            });
+
+            chart.selectAll('*').remove();
+            createBarChart(undergraduateMajorAverageSalaries);
+
+            backButton = d3.select('.chart-container')
+                .append('button')
+                .text('Back')
+                .attr('class', 'back-button')
+                .on('click', resetChart);
+
+            // Disable pointer events on bars when drilling down
+            chart.selectAll('.bar')
+                .style('pointer-events', 'none');
+        }
+
+        // Function to reset the chart to the original graph
+        function resetChart() {
+            selectedCategory = null;
+            chart.selectAll('*').remove();
+            createBarChart(categoryAverageSalaries);
+
+            chart.selectAll('.bar')
+                .on('click', onBarClick)
+
+            if (backButton) {
+                backButton.remove();
+                backButton = null;
+            }
+        }
+
+        // Function to create the bar chart
+        function createBarChart(data) {
+            const majors = Array.from(data.keys());
+            //const averageSalaries = Array.from(data.values());
+            const maxSalary = 110000;
+            
+            ylabel = 'Categories';
+            if (selectedCategory != null) {
+                ylabel = 'Majors';
+            }
+
+            const xScale = d3.scaleLinear()
+                .domain([0, maxSalary])
+                .range([0, chartWidth]);
+
+            const yScale = d3.scaleBand()
+                .domain(majors)
+                .range([0, chartHeight])
+                .padding(0.1);
+
+            chart.selectAll('.bar')
+                .data(data)
+                .enter()
+                .append('rect')
+                .attr('class', 'bar')
+                .attr('x', 0)
+                .attr('y', d => yScale(d[0]))
+                .attr('width', d => xScale(d[1]))
+                .attr('height', yScale.bandwidth())
+
+            const yAxis = d3.axisLeft(yScale);
+            chart.append('g')
+                .call(yAxis);
+
+            // Add y-axis label
+            chart.append('text')
+                .attr('transform', 'rotate(-90)')
+                .attr('x', -chartHeight / 2)
+                .attr('y', -margin.left + 75)
+                .style('text-anchor', 'middle')
+                .text(ylabel);
+
+
+            const xAxis = d3.axisBottom(xScale);
+            chart.append('g')
+                .attr('transform', `translate(0, ${chartHeight})`)
+                .call(xAxis);
+
+            // Add x-axis label
+            chart.append('text')
+                .attr('x', chartWidth / 2)
+                .attr('y', chartHeight + margin.bottom / 2 - 25)
+                .style('text-anchor', 'middle')
+                .text('Average Mid-Career Median Salary');
+
+            if (selectedCategory == null) {
+                chart.append('text')
+                    .attr('x', chartWidth)
+                    .attr('y', chartHeight / 2)
+                    .style('text-anchor', 'middle')
+                    .text('Click on bars for more detail')
+                    .attr('opacity', 0.7);
+            }
+            
+
+            drawAnnotations(chart, data, xScale, yScale);
+            
+        }
+        function drawAnnotations(chart, data, xScale, yScale) {
+            if (selectedCategory === null) {
+                const annotationSettings = [
+                {
+                    type: d3.annotationCalloutElbow,
+                    note: {title: '', label: 'STEM majors are seen to make the most money, specifically engineering majors', wrap: 200},
+                    x: xScale(data.get('Engineering and Technology')),
+                    y: yScale('Engineering and Technology') + 25,
+                    dx: 100,
+                    dy: 100,
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
+                },
+                {
+                    type: d3.annotationCalloutElbow,
+                    note: {title: '', label: 'Though majoring in the arts can make a lot of money in the top percentile, the median is quite low as it a high variance field', wrap: 200},
+                    x: xScale(data.get('Arts')),
+                    y: yScale('Arts') + 25,
+                    dx: 300,
+                    dy: 100,
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
+                }];
+
+                const makeAnnotations = d3.annotation()
+                    .annotations(annotationSettings)
+                    .type(d3.annotationCallout);
+
+                chart.append('g')
+                    .attr('class', 'annotation-group')
+                    .call(makeAnnotations);
+            } else if (selectedCategory === 'Business') {
+                const annotationSettings = [
+                {
+                    type: d3.annotationCalloutElbow,
+                    note: {title: '', label: 'Health care administration and hospitality & tourism differ from traditional business degrees with their narrow focuses, thus leading to lower salaries', wrap: 200},
+                    x: xScale(data.get('Health Care Administration')),
+                    y: yScale('Health Care Administration') + 25,
+                    dx: 300,
+                    dy: -100,
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
+                }];
+
+                const makeAnnotations = d3.annotation()
+                    .annotations(annotationSettings)
+                    .type(d3.annotationCallout);
+
+                chart.append('g')
+                    .attr('class', 'annotation-group')
+                    .call(makeAnnotations);
+            } else if (selectedCategory === 'Engineering and Technology') {
+                const annotationSettings = [
+                {
+                    type: d3.annotationCalloutElbow,
+                    note: {title: '', label: 'While computer science does not have engineering in the name, it is often seen as an engineering major', wrap: 200},
+                    x: xScale(data.get('Computer Science')),
+                    y: yScale('Computer Science') + 25,
+                    dx: 100,
+                    dy: 100,
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
+                },
+                {
+                    type: d3.annotationCalloutElbow,
+                    note: {title: '', label: 'IT is the outlier as it is the only major that does not have to do with engineering', wrap: 200},
+                    x: xScale(data.get('Information Technology (IT)')),
+                    y: yScale('Information Technology (IT)') + 25,
+                    dx: 200,
+                    dy: 100,
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
+                }];
+
+                const makeAnnotations = d3.annotation()
+                    .annotations(annotationSettings)
+                    .type(d3.annotationCalloutElbow);
+
+                chart.append('g')
+                    .attr('class', 'annotation-group')
+                    .call(makeAnnotations)
+            } else if (selectedCategory === 'Environmental Science') {
+                const annotationSettings = [
+                {
+                    type: d3.annotationCalloutElbow,
+                    note: {title: '', label: 'While all of these majors do not have the highest pay, they all share a strong commitment to environmental conservation and have a large impact on the world ecology', wrap: 200},
+                    x: xScale(data.get('Geography')),
+                    y: yScale('Geography') + 25,
+                    dx: 200,
+                    dy: 100,
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
+                }];
+
+                const makeAnnotations = d3.annotation()
+                    .annotations(annotationSettings)
+                    .type(d3.annotationCallout);
+
+                chart.append('g')
+                    .attr('class', 'annotation-group')
+                    .call(makeAnnotations);
+            } else if (selectedCategory === 'Social Science') {
+                const annotationSettings = [
+                {
+                    type: d3.annotationCalloutElbow,
+                    note: {title: '', label: 'International relations and political science are both majors that have a lot of uses in the global business world, resulting in larger salaries', wrap: 200},
+                    x: xScale(data.get('International Relations')),
+                    y: yScale('International Relations') + 25,
+                    dx: 200,
+                    dy: 100,
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
+                }];
+
+                const makeAnnotations = d3.annotation()
+                    .annotations(annotationSettings)
+                    .type(d3.annotationCallout);
+
+                chart.append('g')
+                    .attr('class', 'annotation-group')
+                    .call(makeAnnotations);
+            } else if (selectedCategory === 'Arts') {
+                const annotationSettings = [
+                {
+                    type: d3.annotationCalloutElbow,
+                    note: {title: '', label: 'Architecture being more of an applied art and considered engineering explains the larger salary', wrap: 200},
+                    x: xScale(data.get('Architecture')),
+                    y: yScale('Architecture') + 25,
+                    dx: 200,
+                    dy: 100,
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
+                }];
+
+                const makeAnnotations = d3.annotation()
+                    .annotations(annotationSettings)
+                    .type(d3.annotationCallout);
+
+                chart.append('g')
+                    .attr('class', 'annotation-group')
+                    .call(makeAnnotations);
+            } else if (selectedCategory === 'Math and Science') {
+                const annotationSettings = [
+                {
+                    type: d3.annotationCalloutElbow,
+                    note: {title: '', label: 'Physics is a very versatile degree as it requires a lot of math and it is very well applied science, being useful in a lot of engineering jobs', wrap: 200},
+                    x: xScale(data.get('Physics')),
+                    y: yScale('Physics') + 25,
+                    dx: 100,
+                    dy: 100,
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
+                }];
+
+                const makeAnnotations = d3.annotation()
+                    .annotations(annotationSettings)
+                    .type(d3.annotationCallout);
+
+                chart.append('g')
+                    .attr('class', 'annotation-group')
+                    .call(makeAnnotations);
+            } else if (selectedCategory === 'Humanities') {
+                const annotationSettings = [
+                {
+                    type: d3.annotationCalloutElbow,
+                    note: {title: '', label: 'While philosophy majors often do not make a lot out of college, they have one of the highest mid-career median salaries as it helps with the background for a lot of jobs such as law', wrap: 200},
+                    x: xScale(data.get('Philosophy')),
+                    y: yScale('Philosophy') + 25,
+                    dx: 200,
+                    dy: 100,
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
+                }];
+
+                const makeAnnotations = d3.annotation()
+                    .annotations(annotationSettings)
+                    .type(d3.annotationCallout);
+
+                chart.append('g')
+                    .attr('class', 'annotation-group')
+                    .call(makeAnnotations);
+            } else if (selectedCategory === 'Medicine') {
+                const annotationSettings = [
+                {
+                    type: d3.annotationCalloutElbow,
+                    note: {title: '', label: 'Physician assistants (PAs) do not just have a high mid-career median salary, but the highest starting mid-career median salary of all the majors in the data with a salary of $74,300', wrap: 200},
+                    x: xScale(data.get('Physician Assistant')),
+                    y: yScale('Physician Assistant') + 25,
+                    dx: 100,
+                    dy: 100,
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
+                },
+                {
+                    type: d3.annotationCalloutElbow,
+                    note: {title: '', label: 'While some nutrition majors do become epidemiologists, nutrition majors are somewhat limited in their applicable job fields with most becoming nutritionists or food scientists', wrap: 200},
+                    x: xScale(data.get('Nutrition')),
+                    y: yScale('Nutrition') + 25,
+                    dx: 350,
+                    dy: 50,
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
+                }];
+
+                const makeAnnotations = d3.annotation()
+                    .annotations(annotationSettings)
+                    .type(d3.annotationCallout);
+
+                chart.append('g')
+                    .attr('class', 'annotation-group')
+                    .call(makeAnnotations);
+            }
+        }
+        
+    }
+    </script>
+  
+</body>
+</html>
