@@ -8,6 +8,8 @@
     .chart-container {
         margin-top: 10px;
         position: relative;
+        display: flex; /* Add this to center the chart */
+        justify-content: center; /* Add this to center the chart */
     }
     .back-button {
         position: absolute; 
@@ -21,8 +23,11 @@
 <body onload='init()'>
 
     <h1>What Majors Have the Best Mid-Career Median Salaries?</h1>
-    <p>This is the first paragraph.</p>
-    <p>This is the second paragraph.</p>
+    <p>When choosing a major, it is important to ask yourself what salary you will be looking at in order to get a good return on investment (ROI) on your college degree. 
+        While you can find work with any college degree, yet alone find work without one, not everyone has the luxury of not taking out college loans, so finding a job where you can pay them off is crucial to many. 
+        In this chart, you will be able to find what types of majors, and what specific majors, give the best salary towards the middle of one's career. Note that this is only median career, so there may be more variance in different fields.
+        More information about starting salaries and the salaries in different percentiles can be found here: <a href="url">https://www.kaggle.com/datasets/wsj/college-salaries?resource=download</a>.
+    </p>
     <div class='chart-container'></div>
     <script>
     async function init() {
@@ -50,7 +55,7 @@
             map.set(key, averageSalary);
         });
 
-        const svgWidth = 1000;
+        const svgWidth = 2000;
         const svgHeight = 1000;
         const margin = {top: 20, right: 200, bottom: 200, left: 200};
         const chartWidth = svgWidth - margin.left - margin.right;
@@ -186,7 +191,7 @@
                 const annotationSettings = [
                 {
                     type: d3.annotationCalloutElbow,
-                    note: {title: '', label: 'STEM majors are seen to make the most money, specifically engineering majors'},
+                    note: {title: '', label: 'STEM majors are seen to make the most money, specifically engineering majors', wrap: 200},
                     x: xScale(data.get('Engineering and Technology')),
                     y: yScale('Engineering and Technology') + 25,
                     dx: 100,
@@ -196,7 +201,7 @@
                 },
                 {
                     type: d3.annotationCalloutElbow,
-                    note: {title: '', label: 'Though majoring in the arts can make a lot of money in the top percentile, the median is quite low as it a high variance field'},
+                    note: {title: '', label: 'Though majoring in the arts can make a lot of money in the top percentile, the median is quite low as it a high variance field', wrap: 200},
                     x: xScale(data.get('Arts')),
                     y: yScale('Arts') + 25,
                     dx: 300,
@@ -216,11 +221,11 @@
                 const annotationSettings = [
                 {
                     type: d3.annotationCalloutElbow,
-                    note: {title: '', label: 'Health care administration and hospitality & tourism differ from traditional business degrees with their narrow focuses, thus leading to lower salaries'},
+                    note: {title: '', label: 'Health care administration and hospitality & tourism differ from traditional business degrees with their narrow focuses, thus leading to lower salaries', wrap: 200},
                     x: xScale(data.get('Health Care Administration')),
                     y: yScale('Health Care Administration') + 25,
                     dx: 300,
-                    dy: 100,
+                    dy: -100,
                     color: ['black'],
                     subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
                 }];
@@ -236,7 +241,7 @@
                 const annotationSettings = [
                 {
                     type: d3.annotationCalloutElbow,
-                    note: {title: '', label: 'While computer science does not have engineering in the name, it is often seen as an engineering major'},
+                    note: {title: '', label: 'While computer science does not have engineering in the name, it is often seen as an engineering major', wrap: 200},
                     x: xScale(data.get('Computer Science')),
                     y: yScale('Computer Science') + 25,
                     dx: 100,
@@ -246,7 +251,7 @@
                 },
                 {
                     type: d3.annotationCalloutElbow,
-                    note: {title: '', label: 'IT is the outlier as it is the only major that does not have to do with engineering'},
+                    note: {title: '', label: 'IT is the outlier as it is the only major that does not have to do with engineering', wrap: 200},
                     x: xScale(data.get('Information Technology (IT)')),
                     y: yScale('Information Technology (IT)') + 25,
                     dx: 200,
@@ -266,7 +271,7 @@
                 const annotationSettings = [
                 {
                     type: d3.annotationCalloutElbow,
-                    note: {title: '', label: 'While all of these majors do not have the highest pay, they all share a strong commitment to environmental conservation and have a large impact on the world ecology'},
+                    note: {title: '', label: 'While all of these majors do not have the highest pay, they all share a strong commitment to environmental conservation and have a large impact on the world ecology', wrap: 200},
                     x: xScale(data.get('Geography')),
                     y: yScale('Geography') + 25,
                     dx: 200,
@@ -286,7 +291,7 @@
                 const annotationSettings = [
                 {
                     type: d3.annotationCalloutElbow,
-                    note: {title: '', label: 'International relations and political science are both majors that have a lot of uses in the global business world, resulting in larger salaries'},
+                    note: {title: '', label: 'International relations and political science are both majors that have a lot of uses in the global business world, resulting in larger salaries', wrap: 200},
                     x: xScale(data.get('International Relations')),
                     y: yScale('International Relations') + 25,
                     dx: 200,
@@ -306,7 +311,7 @@
                 const annotationSettings = [
                 {
                     type: d3.annotationCalloutElbow,
-                    note: {title: '', label: 'Architecture being more of an applied art and considered engineering explains the larger salary'},
+                    note: {title: '', label: 'Architecture being more of an applied art and considered engineering explains the larger salary', wrap: 200},
                     x: xScale(data.get('Architecture')),
                     y: yScale('Architecture') + 25,
                     dx: 200,
@@ -326,7 +331,7 @@
                 const annotationSettings = [
                 {
                     type: d3.annotationCalloutElbow,
-                    note: {title: '', label: 'Physics is a very versatile degree as it requires a lot of math and it is very well applied science, being useful in a lot of engineering jobs'},
+                    note: {title: '', label: 'Physics is a very versatile degree as it requires a lot of math and it is very well applied science, being useful in a lot of engineering jobs', wrap: 200},
                     x: xScale(data.get('Physics')),
                     y: yScale('Physics') + 25,
                     dx: 100,
@@ -346,7 +351,7 @@
                 const annotationSettings = [
                 {
                     type: d3.annotationCalloutElbow,
-                    note: {title: '', label: 'While philosophy majors often do not make a lot out of college, they have one of the highest mid-career median salaries as it helps with the background for a lot of jobs such as law'},
+                    note: {title: '', label: 'While philosophy majors often do not make a lot out of college, they have one of the highest mid-career median salaries as it helps with the background for a lot of jobs such as law', wrap: 200},
                     x: xScale(data.get('Philosophy')),
                     y: yScale('Philosophy') + 25,
                     dx: 200,
@@ -366,11 +371,21 @@
                 const annotationSettings = [
                 {
                     type: d3.annotationCalloutElbow,
-                    note: {title: '', label: 'Physician assistants (PAs) do not just have a high mid-career median salary, but the highest starting mid-career median salary of $74,300 of all the majors in the data'},
+                    note: {title: '', label: 'Physician assistants (PAs) do not just have a high mid-career median salary, but the highest starting mid-career median salary of all the majors in the data with a salary of $74,300', wrap: 200},
                     x: xScale(data.get('Physician Assistant')),
                     y: yScale('Physician Assistant') + 25,
                     dx: 100,
                     dy: 100,
+                    color: ['black'],
+                    subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
+                },
+                {
+                    type: d3.annotationCalloutElbow,
+                    note: {title: '', label: 'While some nutrition majors do become epidemiologists, nutrition majors are somewhat limited in their applicable job fields with most becoming nutritionists or food scientists', wrap: 200},
+                    x: xScale(data.get('Nutrition')),
+                    y: yScale('Nutrition') + 25,
+                    dx: 350,
+                    dy: 50,
                     color: ['black'],
                     subject: {width: 100, height: yScale.bandwidth()} // Subject area that the annotation points to
                 }];
